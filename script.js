@@ -3,6 +3,7 @@ let qrInstance = null;
 let currentLogoType = 'none'; // 'none', 'instagram', 'twitter', 'youtube', 'github', 'linkedin', 'spotify', 'star', 'custom'
 let customLogoSrc = null;
 let history = JSON.parse(localStorage.getItem('qreator_history') || '[]');
+let currentApiKey = localStorage.getItem('qreator_api_key') || '';
 
 // Preset SVG Logos for high-fidelity rendering on canvas
 const PRESET_LOGOS = {
@@ -21,7 +22,31 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     generateQR();
     renderHistory();
+    initApiKey();
+    updatePlaygroundUrl();
 });
+
+// Tab Switching Logic
+window.switchTab = function(tabName) {
+    const studioTab = document.getElementById('tab-studio');
+    const apiTab = document.getElementById('tab-api');
+    const studioBtn = document.getElementById('tab-studio-btn');
+    const apiBtn = document.getElementById('tab-api-btn');
+
+    if (tabName === 'studio') {
+        studioTab.classList.remove('hidden');
+        apiTab.classList.add('hidden');
+        
+        studioBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-500/10";
+        apiBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+    } else {
+        studioTab.classList.add('hidden');
+        apiTab.classList.remove('hidden');
+        
+        studioBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-white";
+        apiBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-emerald-600 text-white shadow-md shadow-emerald-500/10";
+    }
+};
 
 // Sync Color Pickers and Hex Inputs
 function initColorPickers() {
@@ -40,7 +65,7 @@ function initColorPickers() {
         if (val.length === 7) {
             fgColor.value = val;
             generateQR();
-        } 
+        }
     });
 
     bgColor.addEventListener('input', (e) => {
@@ -59,13 +84,11 @@ function initColorPickers() {
 
 // Setup Event Listeners
 function initEventListeners() {
-    // Text input real-time generation
     const qrText = document.getElementById('qr-text');
     qrText.addEventListener('input', () => {
         generateQR();
     });
 
-    // Logo size slider
     const logoSize = document.getElementById('logo-size');
     const logoSizeVal = document.getElementById('logo-size-val');
     logoSize.addEventListener('input', (e) => {
@@ -73,7 +96,6 @@ function initEventListeners() {
         generateQR();
     });
 
-    // Custom Logo Upload
     const logoUpload = document.getElementById('logo-upload');
     logoUpload.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -83,10 +105,8 @@ function initEventListeners() {
                 customLogoSrc = event.target.result;
                 currentLogoType = 'custom';
                 
-                // Update active state in presets
                 document.querySelectorAll('.logo-preset-btn').forEach(btn => btn.classList.remove('active'));
                 
-                // Show status
                 const status = document.getElementById('logo-status');
                 const statusText = document.getElementById('logo-status-text');
                 status.classList.remove('hidden');
@@ -99,7 +119,6 @@ function initEventListeners() {
         }
     });
 
-    // Action Buttons
     document.getElementById('download-png').addEventListener('click', downloadPNG);
     document.getElementById('download-svg').addEventListener('click', downloadSVG);
     document.getElementById('copy-btn').addEventListener('click', copyImageToClipboard);
@@ -116,17 +135,14 @@ window.setPreset = function(text) {
 window.setLogoPreset = function(type) {
     currentLogoType = type;
     
-    // Update active UI state
     const buttons = document.querySelectorAll('.logo-preset-btn');
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    // Find the clicked button based on title or onclick attribute
     const targetBtn = Array.from(buttons).find(btn => btn.getAttribute('onclick').includes(`'${type}'`));
     if (targetBtn) {
         targetBtn.classList.add('active');
     }
 
-    // Hide custom logo status if switching to preset
     if (type !== 'custom') {
         document.getElementById('logo-status').classList.add('hidden');
     }
@@ -147,12 +163,10 @@ function generateQR() {
     const canvas = document.getElementById('qr-canvas');
     const ctx = canvas.getContext('2d');
 
-    // Set high resolution canvas size (600x600) for Ultra HD rendering
     const size = 600;
     canvas.width = size;
     canvas.height = size;
 
-    // 1. Generate base QR code using QRious on a temporary canvas
     const tempCanvas = document.createElement('canvas');
     const qr = new QRious({
         element: tempCanvas,
@@ -160,13 +174,11 @@ function generateQR() {
         size: size,
         background: bgColor,
         foreground: fgColor,
-        level: 'H' // High error correction to allow logo overlay
+        level: 'H'
     });
 
-    // 2. Draw the base QR code onto our main canvas
     ctx.drawImage(tempCanvas, 0, 0);
 
-    // 3. Draw Logo if selected
     if (currentLogoType !== 'none') {
         if (currentLogoType === 'custom' && customLogoSrc) {
             const img = new Image();
@@ -175,7 +187,6 @@ function generateQR() {
             };
             img.src = customLogoSrc;
         } else if (PRESET_LOGOS[currentLogoType]) {
-            // Convert SVG string to Data URI
             const svgString = PRESET_LOGOS[currentLogoType];
             const svg64 = btoa(unescape(encodeURIComponent(svgString)));
             const b64Start = 'data:image/svg+xml;base64,';
@@ -189,7 +200,6 @@ function generateQR() {
         }
     }
 
-    // Save to history (debounced/throttled to avoid spamming)
     saveToHistoryDebounced(text);
 }
 
@@ -199,7 +209,6 @@ function drawLogoOnCanvas(ctx, img, canvasSize, logoSizePercent, bgColor) {
     const x = (canvasSize - logoSize) / 2;
     const y = (canvasSize - logoSize) / 2;
 
-    // Draw a rounded background badge for the logo to stand out
     const padding = logoSize * 0.15;
     const badgeSize = logoSize + padding * 2;
     const badgeX = x - padding;
@@ -221,12 +230,10 @@ function drawLogoOnCanvas(ctx, img, canvasSize, logoSizePercent, bgColor) {
     ctx.closePath();
     ctx.fill();
 
-    // Draw a subtle shadow/border around the badge
     ctx.strokeStyle = 'rgba(0,0,0,0.08)';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw the logo image
     ctx.drawImage(img, x, y, logoSize, logoSize);
     ctx.restore();
 }
@@ -237,19 +244,15 @@ function saveToHistoryDebounced(text) {
     clearTimeout(historyTimeout);
     historyTimeout = setTimeout(() => {
         if (!text || text === 'https://unsplash.com') return;
-        
-        // Avoid duplicates at the top
         if (history.length > 0 && history[0].text === text) return;
 
         history = history.filter(item => item.text !== text);
-        history.unshift({ 
+        history.unshift({
             text: text,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
 
-        // Limit to 5 items
         if (history.length > 5) history.pop();
-
         localStorage.setItem('qreator_history', JSON.stringify(history));
         renderHistory();
     }, 1500);
@@ -309,7 +312,7 @@ function downloadPNG() {
     showToast('PNG downloaded successfully!');
 }
 
-// Download SVG (Vector wrapper containing high-res image)
+// Download SVG
 function downloadSVG() {
     const canvas = document.getElementById('qr-canvas');
     const dataUrl = canvas.toDataURL('image/png');
@@ -342,6 +345,82 @@ async function copyImageToClipboard() {
         showToast('Failed to copy. Try downloading instead.', true);
     }
 }
+
+// API Key Management
+function initApiKey() {
+    const apiKeyInput = document.getElementById('api-key-input');
+    if (!currentApiKey) {
+        generateNewApiKey(false);
+    } else {
+        apiKeyInput.value = currentApiKey;
+    }
+}
+
+window.generateNewApiKey = function(notify = true) {
+    const randomBytes = new Uint8Array(16);
+    window.crypto.getRandomValues(randomBytes);
+    const key = 'qr_live_' + Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    
+    currentApiKey = key;
+    localStorage.setItem('qreator_api_key', key);
+    
+    const apiKeyInput = document.getElementById('api-key-input');
+    if (apiKeyInput) {
+        apiKeyInput.value = key;
+    }
+    
+    updatePlaygroundUrl();
+    if (notify) {
+        showToast('New API Key generated successfully!');
+    }
+};
+
+window.copyApiKey = function() {
+    const apiKeyInput = document.getElementById('api-key-input');
+    if (apiKeyInput && apiKeyInput.value) {
+        navigator.clipboard.writeText(apiKeyInput.value);
+        showToast('API Key copied to clipboard!');
+    }
+};
+
+// API Playground Logic
+window.updatePlaygroundUrl = function() {
+    const text = encodeURIComponent(document.getElementById('api-play-text').value || 'https://google.com');
+    const fg = document.getElementById('api-play-fg').value || '0f172a';
+    const logo = document.getElementById('api-play-logo').value || 'none';
+    const key = currentApiKey || 'YOUR_API_KEY';
+
+    const url = `https://api.qreator.studio/v1/generate?apikey=${key}&text=${text}&color=${fg}&logo=${logo}`;
+    document.getElementById('api-generated-url').textContent = url;
+};
+
+window.copyPlaygroundUrl = function() {
+    const url = document.getElementById('api-generated-url').textContent;
+    navigator.clipboard.writeText(url);
+    showToast('API Request URL copied!');
+};
+
+// Code Tab Switching
+window.switchCodeTab = function(lang) {
+    document.querySelectorAll('.code-block').forEach(block => block.classList.add('hidden'));
+    document.getElementById(`code-block-${lang}`).classList.remove('hidden');
+
+    const tabs = ['js', 'python', 'flutter'];
+    tabs.forEach(t => {
+        const tabBtn = document.getElementById(`code-tab-${t}`);
+        if (t === lang) {
+            tabBtn.className = "px-4 py-2 text-xs font-bold border-b-2 border-indigo-500 text-white";
+        } else {
+            tabBtn.className = "px-4 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-white";
+        }
+    });
+};
+
+window.copyCode = function(blockId) {
+    const codeText = document.querySelector(`#${blockId} code`).textContent;
+    navigator.clipboard.writeText(codeText);
+    showToast('Code snippet copied!');
+};
 
 // Toast Notification System
 function showToast(message, isError = false) {
