@@ -36,10 +36,11 @@ function initColorPickers() {
     });
     fgColorHex.addEventListener('input', (e) => {
         let val = e.target.value;
-        if (val.startsWith('#') && val.length === 7) {
+        if (!val.startsWith('#')) val = '#' + val;
+        if (val.length === 7) {
             fgColor.value = val;
             generateQR();
-        }
+        } 
     });
 
     bgColor.addEventListener('input', (e) => {
@@ -48,7 +49,8 @@ function initColorPickers() {
     });
     bgColorHex.addEventListener('input', (e) => {
         let val = e.target.value;
-        if (val.startsWith('#') && val.length === 7) {
+        if (!val.startsWith('#')) val = '#' + val;
+        if (val.length === 7) {
             bgColor.value = val;
             generateQR();
         }
@@ -240,7 +242,7 @@ function saveToHistoryDebounced(text) {
         if (history.length > 0 && history[0].text === text) return;
 
         history = history.filter(item => item.text !== text);
-        history.unshift({
+        history.unshift({ 
             text: text,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         });
