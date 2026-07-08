@@ -1,0 +1,65 @@
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #020617;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* Custom Range Input Styling */
+input[type="range"]::-webkit-slider-runnable-track {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    height: 8px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    margin-top: -4px;
+}
+
+/* Logo Preset Active State */
+.logo-preset-btn.active {
+    border-color: #6366f1 !important;
+    background-color: rgba(99, 102, 241, 0.15) !important;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+}
+
+/* Smooth transitions */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+}
+
+/* Toast Animation Classes */
+.toast-show {
+    transform: translateY(0) !important;
+    opacity: 1 !important;
+}
+
+/* Fix overlapping text in color inputs */
+input[type="color"] {
+    padding: 0;
+    border: none;
+    outline: none;
+    -webkit-appearance: none;
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+    border: 1px solid #334155;
+    border-radius: 6px;
+}
